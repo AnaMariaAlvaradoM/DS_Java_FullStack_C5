@@ -1,0 +1,16 @@
+<h1>
+  Bienvenido a {{ nombreClinica }}
+</h1>
+<h1>Catálogo de {{ nombreClinica }}</h1>
+
+@if (mascotas.length === 0) {
+  <p>No hay mascotas registradas.</p>
+} @else {
+  @for (m of mascotas; track m.nombre) {
+    <app-mascota-card
+      [nombre]="m.nombre"
+      [especie]="m.especie"
+      [edad]="m.edad">
+    </app-mascota-card>
+  }
+}

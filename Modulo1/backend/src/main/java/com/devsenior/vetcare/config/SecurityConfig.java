@@ -75,26 +75,27 @@ public class SecurityConfig {
 
     // La cadena de seguridad: que se protege y que no
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(
+                        corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**").permitAll()
-                        // Clase 4 (Modulo 1 Full Stack): consumo de APIs sin JWT todavia.
-                        // El JWT llega en el Modulo 2. Cuando lo agreguen, quiten estas dos lineas.
-                        .requestMatchers("/api/mascotas/**").permitAll()
-                        .requestMatchers("/api/duenos/**").permitAll()
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtFilter,
+                .addFilterBefore(
+                        jwtFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

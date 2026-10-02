@@ -14,6 +14,7 @@
     <div class="detalle-info">
       <h1 class="detalle-nombre">{{ m.nombre }}</h1>
       <p class="detalle-dato"><strong>Especie:</strong> {{ m.especie }}</p>
+      <p class="detalle-dato"><strong>Raza:</strong> {{ m.raza || 'Sin registrar' }}</p>
       <p class="detalle-dato"><strong>Edad:</strong> {{ m.edad }} años</p>
       <p class="detalle-dato"><strong>Dueño:</strong> {{ m.dueno }}</p>
       <a routerLink="/mascotas" class="volver">← Volver al listado</a>

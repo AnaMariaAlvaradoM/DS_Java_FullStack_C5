@@ -1,11 +1,16 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { API_URL } from '../core/api';
+import { mensajeDeError } from '../core/errores';
+import { AuthService } from './auth.service';
 
 export interface Mascota {
   id: number;
   nombre: string;
   especie: string;
+  raza: string | null;
   edad: number;
+  duenoId: number;
   dueno: string;
   foto: string;
 }
@@ -23,10 +28,11 @@ export interface NuevaMascota {
 })
 export class MascotasService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/mascotas';
+  private authService = inject(AuthService);
+  private apiUrl = `${API_URL}/mascotas`;
 
   private listaMascotas = signal<Mascota[]>([]);
-  private cargandoSignal = signal<boolean>(true);
+  private cargandoSignal = signal<boolean>(false);
   private errorSignal = signal<string | null>(null);
 
   mascotas = this.listaMascotas.asReadonly();
@@ -37,7 +43,14 @@ export class MascotasService {
   totalFavoritos = computed(() => this.idsFavoritos().size);
 
   constructor() {
-    this.cargarMascotas();
+    // Los datos siguen a la sesión: entra alguien -> se cargan; sale -> se limpian
+    effect(() => {
+      if (this.authService.usuario()) {
+        this.cargarMascotas();
+      } else {
+        this.limpiar();
+      }
+    });
   }
 
   // GET /api/mascotas
@@ -50,10 +63,8 @@ export class MascotasService {
         this.listaMascotas.set(datos);
         this.cargandoSignal.set(false);
       },
-      error: () => {
-        this.errorSignal.set(
-          'No pudimos conectarnos con el servidor de VetCare. Verifica que el backend esté corriendo en el puerto 8080.'
-        );
+      error: (error: HttpErrorResponse) => {
+        this.errorSignal.set(mensajeDeError(error));
         this.cargandoSignal.set(false);
       }
     });
@@ -65,8 +76,8 @@ export class MascotasService {
       next: (creada) => {
         this.listaMascotas.update(actuales => [...actuales, creada]);
       },
-      error: () => {
-        this.errorSignal.set('No pudimos registrar la mascota. Revisa los datos e intenta de nuevo.');
+      error: (error: HttpErrorResponse) => {
+        this.errorSignal.set(mensajeDeError(error));
       }
     });
   }
@@ -85,5 +96,13 @@ export class MascotasService {
       }
       return nuevos;
     });
+  }
+
+  // Al cerrar sesión no puede quedar nada del usuario anterior en memoria
+  private limpiar() {
+    this.listaMascotas.set([]);
+    this.idsFavoritos.set(new Set());
+    this.errorSignal.set(null);
+    this.cargandoSignal.set(false);
   }
 }

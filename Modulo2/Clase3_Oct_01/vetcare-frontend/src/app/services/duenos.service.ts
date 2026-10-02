@@ -1,13 +1,16 @@
-import { Injectable, signal, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, inject, effect } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { API_URL } from '../core/api';
+import { mensajeDeError } from '../core/errores';
+import { AuthService } from './auth.service';
 
 export interface Dueno {
   id: number;
   nombre: string;
   apellido: string;
   documento: string;
-  telefono: string;
-  email: string;
+  telefono: string | null;
+  email: string | null;
 }
 
 export interface NuevoDueno {
@@ -23,10 +26,11 @@ export interface NuevoDueno {
 })
 export class DuenosService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/duenos';
+  private authService = inject(AuthService);
+  private apiUrl = `${API_URL}/duenos`;
 
   private listaDuenos = signal<Dueno[]>([]);
-  private cargandoSignal = signal<boolean>(true);
+  private cargandoSignal = signal<boolean>(false);
   private errorSignal = signal<string | null>(null);
 
   duenos = this.listaDuenos.asReadonly();
@@ -34,7 +38,13 @@ export class DuenosService {
   error = this.errorSignal.asReadonly();
 
   constructor() {
-    this.cargarDuenos();
+    effect(() => {
+      if (this.authService.usuario()) {
+        this.cargarDuenos();
+      } else {
+        this.limpiar();
+      }
+    });
   }
 
   // GET /api/duenos
@@ -47,10 +57,8 @@ export class DuenosService {
         this.listaDuenos.set(datos);
         this.cargandoSignal.set(false);
       },
-      error: () => {
-        this.errorSignal.set(
-          'No pudimos conectarnos con el servidor de VetCare. Verifica que el backend esté corriendo en el puerto 8080.'
-        );
+      error: (error: HttpErrorResponse) => {
+        this.errorSignal.set(mensajeDeError(error));
         this.cargandoSignal.set(false);
       }
     });
@@ -62,9 +70,15 @@ export class DuenosService {
       next: (creado) => {
         this.listaDuenos.update(actuales => [...actuales, creado]);
       },
-      error: () => {
-        this.errorSignal.set('No pudimos registrar el dueño. Revisa los datos (el documento y el email deben ser únicos).');
+      error: (error: HttpErrorResponse) => {
+        this.errorSignal.set(mensajeDeError(error));
       }
     });
+  }
+
+  private limpiar() {
+    this.listaDuenos.set([]);
+    this.errorSignal.set(null);
+    this.cargandoSignal.set(false);
   }
 }

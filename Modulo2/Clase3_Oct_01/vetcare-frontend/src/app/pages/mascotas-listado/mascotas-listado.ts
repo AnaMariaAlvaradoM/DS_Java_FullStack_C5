@@ -3,6 +3,7 @@ import { MascotaCard } from '../../components/mascota-card/mascota-card';
 import { Component, inject, signal, computed } from '@angular/core';
 import { MascotasService } from '../../services/mascotas.service';
 import { DuenosService } from '../../services/duenos.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-mascotas-listado',
@@ -13,6 +14,7 @@ import { DuenosService } from '../../services/duenos.service';
 export class MascotasListado {
   private mascotasService = inject(MascotasService);
   private duenosService = inject(DuenosService);
+  private authService = inject(AuthService);
 
   mascotas = this.mascotasService.mascotas;
   cargando = this.mascotasService.cargando;
@@ -20,6 +22,9 @@ export class MascotasListado {
 
   // Para el <select> del formulario: se llena con GET /api/duenos (mismo patrón de servicio)
   duenos = this.duenosService.duenos;
+
+  // El veterinario consulta mascotas, pero no las registra
+  puedeRegistrar = computed(() => this.authService.tieneRol('ADMIN', 'RECEPCIONISTA'));
 
   busqueda = signal('');
 

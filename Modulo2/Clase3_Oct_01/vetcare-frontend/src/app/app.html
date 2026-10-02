@@ -1,0 +1,23 @@
+<nav class="barra">
+  <span class="marca">🐾 VetCare</span>
+  <div class="barra-links">
+    <a routerLink="/" class="barra-link">Inicio</a>
+    <a routerLink="/mascotas" class="barra-link">
+      Mascotas
+      @if (totalFavoritos() > 0) {
+        <span class="badge">{{ totalFavoritos() }}</span>
+      }
+    </a>
+    <a routerLink="/duenos" class="barra-link">Dueños</a>
+
+    @if (authService.sesionActiva()) {
+      <a (click)="authService.cerrarSesion()" class="barra-link">Cerrar sesión</a>
+    } @else {
+      <a routerLink="/login" class="barra-link">Iniciar sesión</a>
+    }
+  </div>
+</nav>
+
+<main class="contenido">
+  <router-outlet></router-outlet>
+</main>
